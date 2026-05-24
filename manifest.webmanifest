@@ -1,0 +1,17 @@
+{
+  "name": "全链路学习助手",
+  "short_name": "学习助手",
+  "description": "面向产品经理与研发管理者的 Git、AI 编程与全链路交付学习助手",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f7f2e9",
+  "theme_color": "#f5f1e8",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
