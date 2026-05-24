@@ -14,6 +14,27 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
+    <section class="auth-screen" id="authScreen" aria-labelledby="authTitle">
+      <form class="auth-panel" id="authForm" autocomplete="on">
+        <div class="brand-mark" aria-hidden="true">PM</div>
+        <div>
+          <p class="eyebrow">Private access</p>
+          <h1 id="authTitle">全链路学习助手</h1>
+          <p class="auth-copy">登录后进入你的学习操作台。</p>
+        </div>
+        <label class="auth-field">
+          <span>账号</span>
+          <input id="authUsername" name="username" type="text" autocomplete="username" required />
+        </label>
+        <label class="auth-field">
+          <span>密码</span>
+          <input id="authPassword" name="password" type="password" autocomplete="current-password" required />
+        </label>
+        <p class="auth-error" id="authError" role="alert"></p>
+        <button class="primary-action" type="submit">登录</button>
+      </form>
+    </section>
+
     <div class="app-shell">
       <aside class="sidebar" aria-label="学习助手导航">
         <div class="brand">
@@ -72,6 +93,7 @@
           <div class="topbar-actions">
             <span class="status-pill" id="currentWeekPill">第 1 周</span>
             <span class="status-pill muted">本地进度</span>
+            <button class="secondary-action compact" type="button" id="logoutButton">退出</button>
           </div>
         </header>
 
@@ -228,7 +250,7 @@
             <article class="sync-panel-large">
               <h4>数据边界</h4>
               <p>
-                这个版本不上传你的学习记录，也不需要登录。它适合先跑通学习闭环；
+                这个版本不上传你的学习记录，登录门禁只在浏览器前端执行。它适合先跑通学习闭环；
                 当你确认自己会长期使用，再接入云端账号体系更稳。
               </p>
             </article>

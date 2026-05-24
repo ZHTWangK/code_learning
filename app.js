@@ -1,3 +1,9 @@
+const authConfig = {
+  username: "admin",
+  passwordHash: "1ff0e88239bb681df173b2b945619760c40c10660c526e024150c52557efabd0",
+  sessionKey: "learningAssistantAuthed",
+};
+
 const weeks = [
   {
     id: "w1",
@@ -628,6 +634,52 @@ function showToast(message) {
   }, 2200);
 }
 
+async function sha256(value) {
+  const data = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function setAuthed(isAuthed) {
+  document.body.classList.toggle("is-authed", isAuthed);
+  if (isAuthed) {
+    sessionStorage.setItem(authConfig.sessionKey, "true");
+    qs("#authError").textContent = "";
+    return;
+  }
+  sessionStorage.removeItem(authConfig.sessionKey);
+  qs("#authUsername").value = "";
+  qs("#authPassword").value = "";
+  qs("#authUsername").focus();
+}
+
+async function handleLogin(event) {
+  event.preventDefault();
+  const username = qs("#authUsername").value.trim();
+  const password = qs("#authPassword").value;
+  const passwordHash = await sha256(password);
+  const isValid = username === authConfig.username && passwordHash === authConfig.passwordHash;
+  if (!isValid) {
+    qs("#authError").textContent = "账号或密码不正确。";
+    qs("#authPassword").value = "";
+    qs("#authPassword").focus();
+    return;
+  }
+  setAuthed(true);
+  showToast("登录成功。");
+}
+
+function initAuth() {
+  qs("#authForm").addEventListener("submit", handleLogin);
+  qs("#logoutButton").addEventListener("click", () => {
+    setAuthed(false);
+    showToast("已退出登录。");
+  });
+  setAuthed(sessionStorage.getItem(authConfig.sessionKey) === "true");
+}
+
 function flattenTasks() {
   return weeks.flatMap((week) => week.tasks.map((task) => ({ ...task, weekId: week.id })));
 }
@@ -1024,6 +1076,7 @@ async function registerServiceWorker() {
   }
 }
 
+initAuth();
 bindEvents();
 renderAll();
 setView(activeView);

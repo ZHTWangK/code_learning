@@ -29,6 +29,15 @@ python3 -m http.server 8080
 - 左侧“周报”会生成 Markdown 周报，适合放进 GitHub 仓库。
 - 当前版本不上传任何个人数据。
 
+## 账号门禁
+
+当前公网版本带有一个轻量前端登录门禁：
+
+- 账号：`admin`
+- 密码：`CodeLearning2026!`
+
+注意：这是静态页面里的浏览器端门禁，适合防止随手误入；如果要保护敏感数据，需要接入真正的服务端认证或 Cloudflare Access、Supabase Auth 等托管认证。
+
 ## 推荐发布
 
 把本目录提交到 GitHub 仓库后，可以开启 GitHub Pages。这样电脑、手机和平板都能通过同一个网址访问这个助手。

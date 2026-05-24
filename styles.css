@@ -61,6 +61,83 @@ code {
   min-height: 100vh;
 }
 
+.auth-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background:
+    linear-gradient(90deg, rgba(20, 124, 114, 0.08) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(198, 77, 59, 0.07) 1px, transparent 1px),
+    var(--paper);
+  background-size: 44px 44px;
+}
+
+.is-authed .auth-screen {
+  display: none;
+}
+
+body:not(.is-authed) .app-shell {
+  filter: blur(10px);
+  pointer-events: none;
+  user-select: none;
+}
+
+.auth-panel {
+  display: grid;
+  gap: 16px;
+  width: min(420px, 100%);
+  padding: 26px;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius);
+  background: rgba(255, 250, 240, 0.96);
+  box-shadow: var(--shadow);
+}
+
+.auth-panel h1,
+.auth-panel p {
+  margin: 0;
+}
+
+.auth-panel h1 {
+  margin-top: 4px;
+  font-size: 1.6rem;
+}
+
+.auth-copy {
+  margin-top: 8px;
+  color: var(--muted);
+}
+
+.auth-field {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.auth-field input {
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+  color: var(--ink);
+}
+
+.auth-field input:focus-visible {
+  outline: 3px solid var(--teal-soft);
+  border-color: var(--teal);
+}
+
+.auth-error {
+  min-height: 20px;
+  color: var(--coral);
+  font-weight: 760;
+}
+
 .sidebar {
   position: sticky;
   top: 0;
@@ -198,6 +275,11 @@ code {
 
 .utility-button.danger {
   color: var(--coral);
+}
+
+.secondary-action.compact {
+  min-height: 34px;
+  padding: 6px 10px;
 }
 
 .main-content {
