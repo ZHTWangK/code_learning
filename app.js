@@ -2,6 +2,7 @@ const authConfig = {
   username: "admin",
   passwordHash: "1ff0e88239bb681df173b2b945619760c40c10660c526e024150c52557efabd0",
   sessionKey: "learningAssistantAuthed",
+  tokenKey: "learningAssistantApiToken",
 };
 
 const weeks = [
@@ -601,6 +602,8 @@ const defaultState = {
 let state = loadState();
 let activeView = "dashboard";
 let allExpanded = false;
+let isApplyingRemoteState = false;
+let saveRemoteTimer = 0;
 
 const qs = (selector, root = document) => root.querySelector(selector);
 const qsa = (selector, root = document) => Array.from(root.querySelectorAll(selector));
@@ -618,6 +621,7 @@ function loadState() {
 function saveState() {
   try {
     localStorage.setItem(storageKey, JSON.stringify(state));
+    queueRemoteSave();
   } catch (error) {
     console.warn("Failed to save state", error);
     showToast("浏览器阻止了本地保存，请先导出备份。");
@@ -721,9 +725,12 @@ function setAuthed(isAuthed) {
   if (isAuthed) {
     sessionStorage.setItem(authConfig.sessionKey, "true");
     qs("#authError").textContent = "";
+    updateSyncMode();
     return;
   }
   sessionStorage.removeItem(authConfig.sessionKey);
+  sessionStorage.removeItem(authConfig.tokenKey);
+  updateSyncMode();
   qs("#authUsername").value = "";
   qs("#authPassword").value = "";
   qs("#authUsername").focus();
@@ -733,6 +740,22 @@ async function handleLogin(event) {
   event.preventDefault();
   const username = qs("#authUsername").value.trim();
   const password = qs("#authPassword").value;
+
+  const serverLogin = await loginWithServer(username, password);
+  if (serverLogin.ok) {
+    sessionStorage.setItem(authConfig.tokenKey, serverLogin.token);
+    setAuthed(true);
+    await loadRemoteProgress();
+    showToast("登录成功，已启用服务端同步。");
+    return;
+  }
+  if (serverLogin.available) {
+    qs("#authError").textContent = serverLogin.message || "账号或密码不正确。";
+    qs("#authPassword").value = "";
+    qs("#authPassword").focus();
+    return;
+  }
+
   const passwordHash = await sha256(password);
   const isValid = username === authConfig.username && passwordHash === authConfig.passwordHash;
   if (!isValid) {
@@ -742,7 +765,7 @@ async function handleLogin(event) {
     return;
   }
   setAuthed(true);
-  showToast("登录成功。");
+  showToast("登录成功，当前为本地保存模式。");
 }
 
 function initAuth() {
@@ -751,7 +774,85 @@ function initAuth() {
     setAuthed(false);
     showToast("已退出登录。");
   });
-  setAuthed(sessionStorage.getItem(authConfig.sessionKey) === "true");
+  const hasSession = sessionStorage.getItem(authConfig.sessionKey) === "true";
+  setAuthed(hasSession);
+  if (hasSession && sessionStorage.getItem(authConfig.tokenKey)) {
+    loadRemoteProgress();
+  }
+}
+
+async function loginWithServer(username, password) {
+  if (location.protocol === "file:") return { ok: false, available: false };
+  try {
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return { ok: false, available: true, message: payload.message };
+    }
+    return { ok: true, available: true, token: payload.token };
+  } catch (error) {
+    console.warn("Server login unavailable, fallback to local auth", error);
+    return { ok: false, available: false };
+  }
+}
+
+async function apiFetch(path, options = {}) {
+  const token = sessionStorage.getItem(authConfig.tokenKey);
+  if (!token || location.protocol === "file:") return null;
+  const response = await fetch(path, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      ...(options.headers || {}),
+    },
+  });
+  if (response.status === 401) {
+    setAuthed(false);
+    showToast("登录已过期，请重新登录。");
+    return null;
+  }
+  return response;
+}
+
+async function loadRemoteProgress() {
+  const response = await apiFetch("/api/progress");
+  if (!response?.ok) return;
+  const payload = await response.json();
+  if (!payload.state) {
+    queueRemoteSave();
+    return;
+  }
+  isApplyingRemoteState = true;
+  state = {
+    ...defaultState,
+    ...payload.state,
+  };
+  localStorage.setItem(storageKey, JSON.stringify(state));
+  isApplyingRemoteState = false;
+  renderAll();
+}
+
+function queueRemoteSave() {
+  if (isApplyingRemoteState || !sessionStorage.getItem(authConfig.tokenKey)) return;
+  window.clearTimeout(saveRemoteTimer);
+  saveRemoteTimer = window.setTimeout(async () => {
+    const response = await apiFetch("/api/progress", {
+      method: "PUT",
+      body: JSON.stringify({ state }),
+    });
+    if (response?.ok) {
+      showToast("进度已同步到本地服务端。");
+    }
+  }, 600);
+}
+
+function updateSyncMode() {
+  qs("#syncModePill").textContent = sessionStorage.getItem(authConfig.tokenKey) ? "服务端同步" : "本地进度";
 }
 
 function flattenTasks() {

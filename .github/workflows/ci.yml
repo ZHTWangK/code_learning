@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Syntax check
+        run: npm run check
+
+      - name: Production password guard
+        run: |
+          if NODE_ENV=production timeout 5s node server.js; then
+            echo "Production server should refuse the default password"
+            exit 1
+          fi
+
+      - name: Smoke start
+        env:
+          NODE_ENV: production
+          HOST: 127.0.0.1
+          PORT: 8080
+          LEARNING_ASSISTANT_PASSWORD: GitHubActionsStrongPassword2026
+          LEARNING_ASSISTANT_DB: /tmp/learning-assistant-ci.sqlite
+        run: |
+          node server.js &
+          server_pid=$!
+          sleep 2
+          curl --fail http://127.0.0.1:8080/api/health
+          kill "$server_pid"

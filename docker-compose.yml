@@ -1,0 +1,20 @@
+services:
+  learning-assistant:
+    build: .
+    container_name: learning-assistant
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 8080
+      LEARNING_ASSISTANT_USER: admin
+      LEARNING_ASSISTANT_PASSWORD: ${LEARNING_ASSISTANT_PASSWORD}
+      LEARNING_ASSISTANT_DB: /app/data/learning-assistant.sqlite
+      LEARNING_ASSISTANT_SESSION_DAYS: 14
+    volumes:
+      - learning-assistant-data:/app/data
+
+volumes:
+  learning-assistant-data:
