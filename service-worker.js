@@ -1,10 +1,10 @@
-const cacheName = "pm-ai-git-learning-assistant-v2";
+const cacheName = "pm-ai-git-learning-assistant-v3";
 const assets = [
   "./",
-  "./index.html?v=20260524-2",
-  "./styles.css?v=20260524-2",
-  "./app.js?v=20260524-2",
-  "./manifest.webmanifest?v=20260524-2",
+  "./index.html?v=20260526-1",
+  "./styles.css?v=20260526-1",
+  "./app.js?v=20260526-1",
+  "./manifest.webmanifest?v=20260526-1",
   "./icon.svg",
 ];
 
