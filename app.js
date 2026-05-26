@@ -595,6 +595,7 @@ const storageKey = "pm-ai-git-learning-assistant-v1";
 const defaultState = {
   done: {},
   notes: {},
+  taskNotes: {},
   milestones: {},
   expanded: {},
 };
@@ -889,9 +890,12 @@ function makeTag(text) {
 function renderTaskList(container, tasks) {
   container.replaceChildren();
   tasks.forEach((task) => {
+    const item = document.createElement("article");
+    item.className = "task-item";
+    item.classList.toggle("is-complete", Boolean(state.done[task.id]));
+
     const label = document.createElement("label");
-    label.className = "task-item";
-    label.classList.toggle("is-complete", Boolean(state.done[task.id]));
+    label.className = "task-check";
 
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
@@ -912,7 +916,33 @@ function renderTaskList(container, tasks) {
 
     content.append(title, detail);
     label.append(checkbox, content);
-    container.append(label);
+
+    const notes = state.taskNotes[task.id] || {};
+    const noteGrid = document.createElement("div");
+    noteGrid.className = "task-note-grid";
+    [
+      ["summary", "纪要", "记录这项任务的关键结论、完成过程和待跟进问题。"],
+      ["memory", "记忆", "沉淀成以后可复用的规则、判断口径、踩坑经验。"],
+      ["resources", "材料资源", "粘贴链接、文件名、仓库、PR、Issue、课程材料或参考资料。"],
+    ].forEach(([key, titleText, placeholder]) => {
+      const field = document.createElement("label");
+      field.className = "task-note-field";
+      const noteTitle = document.createElement("span");
+      noteTitle.textContent = titleText;
+      const textarea = document.createElement("textarea");
+      textarea.className = "task-note-box";
+      textarea.placeholder = placeholder;
+      textarea.value = notes[key] || "";
+      textarea.addEventListener("input", () => {
+        state.taskNotes[task.id] = { ...(state.taskNotes[task.id] || {}), [key]: textarea.value };
+        saveState();
+      });
+      field.append(noteTitle, textarea);
+      noteGrid.append(field);
+    });
+
+    item.append(label, noteGrid);
+    container.append(item);
   });
 }
 
@@ -1163,6 +1193,20 @@ function exportMarkdown() {
     "## 本周复盘",
     "",
     state.notes[current.id] || "还没有填写本周复盘。",
+    "",
+    "## 本周任务笔记",
+    "",
+    ...current.tasks.flatMap((task) => {
+      const notes = state.taskNotes[task.id] || {};
+      return [
+        `### ${task.title}`,
+        "",
+        `- 纪要：${notes.summary || "未记录"}`,
+        `- 记忆：${notes.memory || "未记录"}`,
+        `- 材料资源：${notes.resources || "未记录"}`,
+        "",
+      ];
+    }),
     "",
     "## 下一步",
     "",
